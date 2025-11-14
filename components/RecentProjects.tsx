@@ -1,7 +1,6 @@
 "use client";
-
 import { FaLocationArrow } from "react-icons/fa6";
-
+import { FaGithub } from "react-icons/fa";
 import { projects } from "@/data";
 import { PinContainer } from "./ui/Pin";
 
@@ -13,15 +12,12 @@ const RecentProjects = () => {
         <span className="text-purple">recent projects</span>
       </h1>
       <div className="flex flex-wrap items-center justify-center p-4 gap-16 mt-10">
-        {projects.map((item) => (
+       {projects.map((item, idx) => (
           <div
             className="lg:min-h-[32.5rem] h-[25rem] flex items-center justify-center sm:w-96 w-[80vw]"
             key={item.id}
           >
-            <PinContainer
-              title="/ui.aceternity.com"
-              href="https://twitter.com/mannupaaji"
-            >
+            <PinContainer title={item.title} href={item.liveLink}>
               <div className="relative flex items-center justify-center sm:w-96 w-[80vw] overflow-hidden h-[20vh] lg:h-[30vh] mb-10">
                 <div
                   className="relative w-full h-full overflow-hidden lg:rounded-3xl"
@@ -35,11 +31,9 @@ const RecentProjects = () => {
                   className="z-10 absolute bottom-0"
                 />
               </div>
-
               <h1 className="font-bold lg:text-2xl md:text-xl text-base line-clamp-1">
                 {item.title}
               </h1>
-
               <p
                 className="lg:text-xl lg:font-normal font-light text-sm line-clamp-2"
                 style={{
@@ -49,7 +43,6 @@ const RecentProjects = () => {
               >
                 {item.des}
               </p>
-
               <div className="flex items-center justify-between mt-7 mb-3">
                 <div className="flex items-center">
                   {item.iconLists.map((icon, index) => (
@@ -64,12 +57,43 @@ const RecentProjects = () => {
                     </div>
                   ))}
                 </div>
-
-                <div className="flex justify-center items-center">
-                  <p className="flex lg:text-xl md:text-xs text-sm text-purple">
-                    Check Live Site
-                  </p>
-                  <FaLocationArrow className="ms-3" color="#CBACF9" />
+                {/* LINK BUTTONS */}
+                <div className="flex justify-center items-center gap-3">
+                  {idx === 0 && (
+                    <>
+                      <a
+                        href={item.liveLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
+                        <p className="flex lg:text-xl md:text-xs text-sm text-purple">
+                          Live Site
+                        </p>
+                        <FaLocationArrow className="ms-2" color="#CBACF9" />
+                      </a>
+                      <a
+                        href={item.githubLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center"
+                      >
+                        <FaGithub className="text-xl ms-2" color="#CBACF9" />
+                        <span className="ml-2 flex lg:text-xl md:text-xs text-sm text-purple">GitHub</span>
+                      </a>
+                    </>
+                  )}
+                  {idx !== 0 && (
+                    <a
+                      href={item.githubLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center"
+                    >
+                      <FaGithub className="text-xl" color="#CBACF9" />
+                      <span className="ml-2 flex lg:text-xl md:text-xs text-sm text-purple">GitHub</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </PinContainer>
@@ -79,5 +103,4 @@ const RecentProjects = () => {
     </div>
   );
 };
-
 export default RecentProjects;
