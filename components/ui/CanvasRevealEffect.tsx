@@ -11,17 +11,6 @@ export const CanvasRevealEffect = ({
   containerClassName,
   dotSize,
   showGradient = true,
-}: {
-  /**
-   * 0.1 - slower
-   * 1.0 - faster
-   */
-  animationSpeed?: number;
-  opacities?: number[];
-  colors?: number[][];
-  containerClassName?: string;
-  dotSize?: number;
-  showGradient?: boolean;
 }) => {
   return (
     <div className={cn("h-full relative bg-white w-full", containerClassName)}>
@@ -41,6 +30,7 @@ export const CanvasRevealEffect = ({
           center={["x", "y"]}
         />
       </div>
+
       {showGradient && (
         <div className="absolute inset-0 bg-gradient-to-t from-gray-950 to-[84%]" />
       )}
@@ -138,6 +128,7 @@ const DotMatrix: React.FC<DotMatrixProps> = ({
         float map(float value, float min1, float max1, float min2, float max2) {
             return min2 + (value - min1) * (max2 - min2) / (max1 - min1);
         }
+
         void main() {
             vec2 st = fragCoord.xy;
             ${
@@ -150,24 +141,25 @@ const DotMatrix: React.FC<DotMatrixProps> = ({
                 ? "st.y -= abs(floor((mod(u_resolution.y, u_total_size) - u_dot_size) * 0.5));"
                 : ""
             }
-      float opacity = step(0.0, st.x);
-      opacity *= step(0.0, st.y);
 
-      vec2 st2 = vec2(int(st.x / u_total_size), int(st.y / u_total_size));
+            float opacity = step(0.0, st.x);
+            opacity *= step(0.0, st.y);
 
-      float frequency = 5.0;
-      float show_offset = random(st2);
-      float rand = random(st2 * floor((u_time / frequency) + show_offset + frequency) + 1.0);
-      opacity *= u_opacities[int(rand * 10.0)];
-      opacity *= 1.0 - step(u_dot_size / u_total_size, fract(st.x / u_total_size));
-      opacity *= 1.0 - step(u_dot_size / u_total_size, fract(st.y / u_total_size));
+            vec2 st2 = vec2(int(st.x / u_total_size), int(st.y / u_total_size));
 
-      vec3 color = u_colors[int(show_offset * 6.0)];
+            float frequency = 5.0;
+            float show_offset = random(st2);
+            float rand = random(st2 * floor((u_time / frequency) + show_offset + frequency) + 1.0);
+            opacity *= u_opacities[int(rand * 10.0)];
+            opacity *= 1.0 - step(u_dot_size / u_total_size, fract(st.x / u_total_size));
+            opacity *= 1.0 - step(u_dot_size / u_total_size, fract(st.y / u_total_size));
 
-      ${shader}
+            vec3 color = u_colors[int(show_offset * 6.0)];
 
-      fragColor = vec4(color, opacity);
-      fragColor.rgb *= fragColor.a;
+            ${shader}
+
+            fragColor = vec4(color, opacity);
+            fragColor.rgb *= fragColor.a;
         }`}
       uniforms={uniforms}
       maxFps={60}
@@ -181,16 +173,8 @@ type Uniforms = {
     type: string;
   };
 };
-const ShaderMaterial = ({
-  source,
-  uniforms,
-  maxFps = 60,
-}: {
-  source: string;
-  hovered?: boolean;
-  maxFps?: number;
-  uniforms: Uniforms;
-}) => {
+
+const ShaderMaterial = ({ source, uniforms, maxFps = 60 }) => {
   const { size } = useThree();
   const ref = useRef<THREE.Mesh>();
   let lastFrameTime = 0;
@@ -198,9 +182,9 @@ const ShaderMaterial = ({
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const timestamp = clock.getElapsedTime();
-    if (timestamp - lastFrameTime < 1 / maxFps) {
-      return;
-    }
+
+    if (timestamp - lastFrameTime < 1 / maxFps) return;
+
     lastFrameTime = timestamp;
 
     const material: any = ref.current.material;
@@ -218,15 +202,18 @@ const ShaderMaterial = ({
         case "uniform1f":
           preparedUniforms[uniformName] = { value: uniform.value, type: "1f" };
           break;
+
         case "uniform3f":
           preparedUniforms[uniformName] = {
             value: new THREE.Vector3().fromArray(uniform.value),
             type: "3f",
           };
           break;
+
         case "uniform1fv":
           preparedUniforms[uniformName] = { value: uniform.value, type: "1fv" };
           break;
+
         case "uniform3fv":
           preparedUniforms[uniformName] = {
             value: uniform.value.map((v: number[]) =>
@@ -235,12 +222,14 @@ const ShaderMaterial = ({
             type: "3fv",
           };
           break;
+
         case "uniform2f":
           preparedUniforms[uniformName] = {
             value: new THREE.Vector2().fromArray(uniform.value),
             type: "2f",
           };
           break;
+
         default:
           console.error(`Invalid uniform type for '${uniformName}'.`);
           break;
@@ -250,22 +239,20 @@ const ShaderMaterial = ({
     preparedUniforms["u_time"] = { value: 0, type: "1f" };
     preparedUniforms["u_resolution"] = {
       value: new THREE.Vector2(size.width * 2, size.height * 2),
-    }; // Initialize u_resolution
+    };
+
     return preparedUniforms;
   };
 
-  // Shader material
   const material = useMemo(() => {
-    const materialObject = new THREE.ShaderMaterial({
+    return new THREE.ShaderMaterial({
       vertexShader: `
       precision mediump float;
       in vec2 coordinates;
       uniform vec2 u_resolution;
       out vec2 fragCoord;
       void main(){
-        float x = position.x;
-        float y = position.y;
-        gl_Position = vec4(x, y, 0.0, 1.0);
+        gl_Position = vec4(position, 1.0);
         fragCoord = (position.xy + vec2(1.0)) * 0.5 * u_resolution;
         fragCoord.y = u_resolution.y - fragCoord.y;
       }
@@ -277,8 +264,6 @@ const ShaderMaterial = ({
       blendSrc: THREE.SrcAlphaFactor,
       blendDst: THREE.OneFactor,
     });
-
-    return materialObject;
   }, [size.width, size.height, source]);
 
   return (
@@ -290,12 +275,22 @@ const ShaderMaterial = ({
 };
 
 const Shader: React.FC<ShaderProps> = ({ source, uniforms, maxFps = 60 }) => {
+  const [mounted, setMounted] = React.useState(false);
+
+  // Prevent SSR crash by rendering Canvas only in browser
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null; // Avoid SSR crash
+
   return (
-    <Canvas className="absolute inset-0  h-full w-full">
+    <Canvas className="absolute inset-0 h-full w-full">
       <ShaderMaterial source={source} uniforms={uniforms} maxFps={maxFps} />
     </Canvas>
   );
 };
+
 interface ShaderProps {
   source: string;
   uniforms: {
